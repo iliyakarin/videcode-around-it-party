@@ -2,7 +2,6 @@ import json
 
 from expense.reply import ASK_PHOTO, INFERENCE_FAILED, SHEETS_UNAVAILABLE
 from hermes_plugin import tools
-from tests.fakes import FakeSheets
 
 
 def test_sheets_unavailable_when_not_ready():
@@ -21,10 +20,8 @@ def test_ask_photo_when_image_path_missing():
 
 def test_inference_failed_when_complete_raises(monkeypatch):
     tools._ready = True
-    tools._client = FakeSheets(
-        ["Food"],
-        {"Food": ["Date", "Description", "Amount", "Paid with"]},
-    )
+    tools._client = object()
+    monkeypatch.setattr("expense.handle.bootstrap", lambda _client: ["Food"])
 
     def boom(*args, **kwargs):
         raise FileNotFoundError("no model")
