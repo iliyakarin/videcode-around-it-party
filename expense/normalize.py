@@ -8,11 +8,19 @@ OTHER = "Other"
 SUMMARY = "Summary"
 
 
+def _is_ascii_digit(ch: str) -> bool:
+    return len(ch) == 1 and "0" <= ch <= "9"
+
+
+def _is_ascii_digits(s: str) -> bool:
+    return bool(s) and all(_is_ascii_digit(c) for c in s)
+
+
 def _valid_thousands(int_part: str, thou_sep: str) -> bool:
     if thou_sep not in int_part:
-        return int_part.isdigit()
+        return _is_ascii_digits(int_part)
     groups = int_part.split(thou_sep)
-    if any(not g.isdigit() for g in groups):
+    if any(not _is_ascii_digits(g) for g in groups):
         return False
     if len(groups) == 1:
         return True
@@ -26,7 +34,7 @@ def _valid_thousands(int_part: str, thou_sep: str) -> bool:
 
 
 def _parse_number(s: str) -> float | None:
-    if not s or not all(c.isdigit() or c in ".," for c in s):
+    if not s or not all(_is_ascii_digit(c) or c in ".," for c in s):
         return None
     dot_count = s.count(".")
     comma_count = s.count(",")
@@ -36,13 +44,13 @@ def _parse_number(s: str) -> float | None:
 
     if dot_count == 0 and comma_count == 1:
         left, right = s.split(",")
-        if not left.isdigit() or not right.isdigit() or len(right) not in (1, 2):
+        if not _is_ascii_digits(left) or not _is_ascii_digits(right) or len(right) not in (1, 2):
             return None
         return float(f"{left}.{right}")
 
     if comma_count == 0 and dot_count == 1:
         left, right = s.split(".")
-        if not left.isdigit() or not right.isdigit() or len(right) not in (1, 2):
+        if not _is_ascii_digits(left) or not _is_ascii_digits(right) or len(right) not in (1, 2):
             return None
         return float(f"{left}.{right}")
 
@@ -55,12 +63,12 @@ def _parse_number(s: str) -> float | None:
             dec_pos, thou_sep = last_comma, "."
         int_part = s[:dec_pos]
         frac_part = s[dec_pos + 1 :]
-        if not frac_part.isdigit() or len(frac_part) not in (1, 2):
+        if not _is_ascii_digits(frac_part) or len(frac_part) not in (1, 2):
             return None
         if thou_sep in int_part and not _valid_thousands(int_part, thou_sep):
             return None
         int_part = int_part.replace(thou_sep, "")
-        if not int_part.isdigit():
+        if not _is_ascii_digits(int_part):
             return None
         return float(f"{int_part}.{frac_part}")
 
@@ -116,11 +124,11 @@ def _amount(raw: object) -> tuple[float | None, str]:
             sign = -1
             i += 1
             continue
-        if text[i].isdigit() or text[i] in ".,":
+        if _is_ascii_digit(text[i]) or text[i] in ".,":
             if number is not None:
                 return fail()
             j = i
-            while j < n and (text[j].isdigit() or text[j] in ".,"):
+            while j < n and (_is_ascii_digit(text[j]) or text[j] in ".,"):
                 j += 1
             number = text[i:j]
             i = j
@@ -129,7 +137,7 @@ def _amount(raw: object) -> tuple[float | None, str]:
         while (
             j < n
             and not text[j].isspace()
-            and not text[j].isdigit()
+            and not _is_ascii_digit(text[j])
             and text[j] not in ".,"
             and text[j] != "-"
         ):

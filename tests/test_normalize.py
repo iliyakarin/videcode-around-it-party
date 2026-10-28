@@ -115,3 +115,14 @@ def test_amount_currency_tokens_in_notes():
     )
     assert line.amount == 4.5
     assert line.notes == "$ USD"
+
+def test_amount_unreadable_garbage_and_multi_number():
+    for raw in ("4²", "2 x 4.50", "4.50-", "4.50 USD-"):
+        line = normalize(
+            LineIn("2026-10-03", "Bad", raw, None, "Groceries"),
+            categories=CATS,
+            message_date="2026-10-28",
+        )
+        assert line.amount is None
+        assert line.category == "Other"
+        assert line.amount_missing is True
