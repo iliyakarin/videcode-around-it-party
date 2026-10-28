@@ -1,0 +1,6 @@
+model:
+  provider: custom
+  base_url: http://host.docker.internal:8080/v1
+  default: Qwen3VL-8B-Instruct-Q4_K_M.gguf
+  supports_vision: true
+  context_length: 8192
