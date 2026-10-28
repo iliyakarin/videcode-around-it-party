@@ -50,3 +50,45 @@ def test_missing_date_uses_message_day_and_outside_october_is_kept():
     assert outside.date == "2026-09-30"
     assert outside.outside_october is True
     assert outside.category == "Transport"
+
+def test_amount_leading_minus():
+    line = normalize(
+        LineIn("2026-10-03", "Refund", "-4.50", None, "Home"),
+        categories=CATS,
+        message_date="2026-10-28",
+    )
+    assert line.amount == -4.5
+    neg_cur = normalize(
+        LineIn("2026-10-03", "Refund", "-$4.50", None, "Home"),
+        categories=CATS,
+        message_date="2026-10-28",
+    )
+    assert neg_cur.amount == -4.5
+    assert neg_cur.notes == "$"
+
+def test_amount_thousands_without_decimal_is_unreadable():
+    line = normalize(
+        LineIn("2026-10-03", "Bad", "1,234", None, "Groceries"),
+        categories=CATS,
+        message_date="2026-10-28",
+    )
+    assert line.amount is None
+    assert line.category == "Other"
+    assert line.amount_missing is True
+
+def test_amount_european_thousands_and_decimal():
+    line = normalize(
+        LineIn("2026-10-03", "Bill", "1.234,56", None, "Home"),
+        categories=CATS,
+        message_date="2026-10-28",
+    )
+    assert line.amount == 1234.56
+
+def test_amount_currency_tokens_in_notes():
+    line = normalize(
+        LineIn("2026-10-03", "Bill", "$4.50 USD", None, "Transport"),
+        categories=CATS,
+        message_date="2026-10-28",
+    )
+    assert line.amount == 4.5
+    assert line.notes == "$ USD"
