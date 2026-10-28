@@ -1,0 +1,5 @@
+name: expense
+version: 0.1.0
+description: Write October bill photos into the personal expense spreadsheet
+provides_tools:
+  - record_expense

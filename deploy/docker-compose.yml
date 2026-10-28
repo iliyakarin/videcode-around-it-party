@@ -1,6 +1,9 @@
 services:
   gateway:
-    image: nousresearch/hermes-agent:latest
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: personal-expense-hermes
     container_name: expense-hermes
     restart: unless-stopped
     command: ["gateway", "run"]
