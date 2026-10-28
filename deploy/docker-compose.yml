@@ -1,0 +1,18 @@
+services:
+  gateway:
+    image: nousresearch/hermes-agent:latest
+    container_name: expense-hermes
+    restart: unless-stopped
+    command: ["gateway", "run"]
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${HERMES_HOME}:/opt/data
+      - ../hermes_plugin:/opt/data/plugins/expense:ro
+      - ${GOOGLE_APPLICATION_CREDENTIALS}:/secrets/sheets-sa.json:ro
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/sheets-sa.json
+      LLAMA_BASE_URL: http://host.docker.internal:8080/v1
+      HERMES_UID: ${HERMES_UID}
+      HERMES_GID: ${HERMES_GID}
