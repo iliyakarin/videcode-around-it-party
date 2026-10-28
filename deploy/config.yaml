@@ -1,6 +1,19 @@
 model:
   provider: custom
   base_url: http://host.docker.internal:8080/v1
+  api_key: "none"
   default: Qwen3VL-8B-Instruct-Q4_K_M.gguf
   supports_vision: true
-  context_length: 8192
+  context_length: 32768
+
+plugins:
+  enabled: [expense]
+
+# Telegram gets only the expense tool.
+platform_toolsets:
+  telegram: [expense]
+
+agent:
+  system_prompt: |
+    Call record_expense for every photo. Relay its reply field unchanged.
+    For any message without a photo, reply exactly "Send a photo of the bill."

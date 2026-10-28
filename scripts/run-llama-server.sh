@@ -8,6 +8,6 @@ exec /opt/homebrew/bin/llama-server \
   --mmproj "$MMPROJ" \
   --host 127.0.0.1 \
   --port 8080 \
-  -c 8192 \
+  -c 32768 \
   -ngl 99 \
   --jinja

@@ -18,7 +18,6 @@ SCHEMA = {
 
 
 def register(ctx):
-    tools.load()
     ctx.register_tool(
         name="record_expense",
         toolset="expense",

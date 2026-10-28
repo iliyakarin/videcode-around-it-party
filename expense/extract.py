@@ -12,7 +12,12 @@ def build_prompt(categories: list[str]) -> str:
         "Read this bill photo. Return a JSON array of line items. "
         "Each object has date (YYYY-MM-DD or null), description, amount, "
         f"paid_with, and category. category must be one of: {names}. "
-        "Use one object per line item. Do not wrap the array in prose."
+        "Use one object per line item. "
+        "Skip subtotal, total, and change lines. "
+        "List tax, tip, and fees as their own items. "
+        "Copy the amount as printed, including any currency symbol. "
+        "Use null when paid_with or the amount is not shown. "
+        "Do not wrap the array in prose."
     )
 
 def parse_model_json(text: str) -> list[LineIn]:

@@ -28,15 +28,23 @@ def bootstrap(client) -> list[str]:
         tabs = client.list_tabs()
     categories = [tab for tab in tabs if tab != SUMMARY]
     for tab in categories:
-        if client.read_header(tab) != HEADER:
+        if not client.read_header(tab):
             client.write_header(tab, HEADER)
     client.replace_summary(summary_rows(categories))
     return categories
 
 
+def _text(value: str) -> str:
+    # USER_ENTERED would evaluate a leading = + - @ as a formula.
+    return "'" + value if value.startswith(("=", "+", "-", "@")) else value
+
+
 def _row(line: NormalizedLine) -> list[str]:
     amount = "" if line.amount is None else f"{line.amount:.2f}"
-    return [line.date, line.description, amount, line.paid_with, line.notes]
+    return [
+        line.date, _text(line.description), amount,
+        _text(line.paid_with), _text(line.notes),
+    ]
 
 
 def append_lines(client, lines: list[NormalizedLine]) -> AppendResult:

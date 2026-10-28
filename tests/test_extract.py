@@ -12,6 +12,13 @@ def test_prompt_lists_categories():
     text = build_prompt(["Groceries", "Restorants and fun"])
     assert "Groceries" in text and "Restorants and fun" in text
     assert "JSON array" in text
+    for phrase in (
+        "Skip subtotal, total, and change lines",
+        "tax, tip, and fees as their own items",
+        "as printed, including any currency symbol",
+        "null when paid_with or the amount is not shown",
+    ):
+        assert phrase in text
 
 def test_retries_once_then_raises():
     calls = {"n": 0}
