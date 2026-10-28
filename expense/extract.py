@@ -25,6 +25,8 @@ def parse_model_json(text: str) -> list[LineIn]:
         raise ValueError("not an array")
     lines = []
     for item in data:
+        if not isinstance(item, dict):
+            raise ValueError("array item is not an object")
         lines.append(LineIn(
             date=item.get("date"),
             description=str(item.get("description") or ""),

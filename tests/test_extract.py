@@ -21,3 +21,12 @@ def test_retries_once_then_raises():
     with pytest.raises(InferenceError):
         extract_lines(complete, image_path="bill.jpg", categories=["Groceries"])
     assert calls["n"] == 2
+
+def test_retries_on_non_object_array_items():
+    calls = {"n": 0}
+    def complete(prompt, image_path):
+        calls["n"] += 1
+        return '["Milk"]'
+    with pytest.raises(InferenceError):
+        extract_lines(complete, image_path="bill.jpg", categories=["Groceries"])
+    assert calls["n"] == 2
