@@ -65,6 +65,29 @@ def test_amount_leading_minus():
     )
     assert neg_cur.amount == -4.5
     assert neg_cur.notes == "$"
+    neg_after = normalize(
+        LineIn("2026-10-03", "Refund", "$-4.50", None, "Home"),
+        categories=CATS,
+        message_date="2026-10-28",
+    )
+    assert neg_after.amount == -4.5
+    assert neg_after.notes == "$"
+
+def test_amount_invalid_sign_and_suffix_tokens():
+    usd_minus = normalize(
+        LineIn("2026-10-03", "Bad", "USD-4.50", None, "Groceries"),
+        categories=CATS,
+        message_date="2026-10-28",
+    )
+    assert usd_minus.amount is None
+    assert usd_minus.category == "Other"
+    each = normalize(
+        LineIn("2026-10-03", "Bad", "4.50 each", None, "Groceries"),
+        categories=CATS,
+        message_date="2026-10-28",
+    )
+    assert each.amount is None
+    assert each.category == "Other"
 
 def test_amount_thousands_without_decimal_is_unreadable():
     line = normalize(

@@ -1,3 +1,4 @@
+import unicodedata
 from datetime import datetime
 
 from expense.model import LineIn, NormalizedLine
@@ -66,6 +67,16 @@ def _parse_number(s: str) -> float | None:
     return None
 
 
+def _is_sc_char(ch: str) -> bool:
+    return unicodedata.category(ch) == "Sc"
+
+
+def _valid_currency_token(token: str) -> bool:
+    if len(token) == 3 and token.isascii() and token.isalpha():
+        return True
+    return bool(token) and all(_is_sc_char(c) for c in token)
+
+
 def _amount(raw: object) -> tuple[float | None, str]:
     if raw is None:
         return None, ""
@@ -73,48 +84,77 @@ def _amount(raw: object) -> tuple[float | None, str]:
     if not text:
         return None, ""
 
-    negative = False
+    def fail() -> tuple[None, str]:
+        return None, ""
+
     i = 0
-    if text[0] == "-":
-        negative = True
-        i = 1
+    n = len(text)
+    sign = 1
+    pre_currencies: list[str] = []
+    post_currencies: list[str] = []
+    number: str | None = None
 
-    currency_tokens: list[str] = []
-    numeric_parts: list[str] = []
+    if i < n and text[i] == "-":
+        sign = -1
+        i += 1
 
-    while i < len(text):
-        c = text[i]
-        if c.isspace():
+    while i < n:
+        if text[i].isspace():
             i += 1
             continue
-        if c == "-":
-            return None, " ".join(currency_tokens)
-        if c.isdigit() or c in ".,":
+        if text[i] == "-":
+            if number is not None:
+                return fail()
+            if pre_currencies:
+                if not all(all(_is_sc_char(c) for c in tok) for tok in pre_currencies):
+                    return fail()
+                sign = -1
+                i += 1
+                continue
+            if sign == -1:
+                return fail()
+            sign = -1
+            i += 1
+            continue
+        if text[i].isdigit() or text[i] in ".,":
+            if number is not None:
+                return fail()
             j = i
-            while j < len(text) and (text[j].isdigit() or text[j] in ".,"):
+            while j < n and (text[j].isdigit() or text[j] in ".,"):
                 j += 1
-            numeric_parts.append(text[i:j])
+            number = text[i:j]
             i = j
             continue
         j = i
-        while j < len(text) and not text[j].isspace() and not text[j].isdigit() and text[j] not in ".,":
+        while (
+            j < n
+            and not text[j].isspace()
+            and not text[j].isdigit()
+            and text[j] not in ".,"
+            and text[j] != "-"
+        ):
             j += 1
-        if j == i:
+        token = text[i:j]
+        if not token:
             i += 1
             continue
-        currency_tokens.append(text[i:j])
+        if not _valid_currency_token(token):
+            return fail()
+        if number is None:
+            pre_currencies.append(token)
+        else:
+            post_currencies.append(token)
         i = j
 
-    notes = " ".join(currency_tokens)
-    if len(numeric_parts) != 1:
-        return None, notes
+    if number is None:
+        return fail()
 
-    num = _parse_number(numeric_parts[0])
+    num = _parse_number(number)
     if num is None:
-        return None, notes
-    if negative:
-        num = -num
-    return num, notes
+        return fail()
+
+    notes = " ".join(pre_currencies + post_currencies)
+    return sign * num, notes
 
 
 def _date(raw: str | None, message_date: str) -> tuple[str, bool, bool]:
