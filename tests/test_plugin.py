@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 import pytest
@@ -27,11 +28,51 @@ def test_register_only_registers_tool(monkeypatch):
 
     class Ctx:
         def register_tool(self, **kwargs):
-            calls.append(kwargs)
+            calls.append(kwargs["name"])
+
+        def register_hook(self, name, callback):
+            calls.append(name)
 
     hermes_plugin.register(Ctx())
-    assert [c["name"] for c in calls] == ["record_expense"]
+    assert calls == ["record_expense", "pre_gateway_dispatch"]
     assert tools._ready is False
+
+
+def test_photo_writes_and_skips_the_model(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_ALLOWED_USERS", "395147397")
+    monkeypatch.setattr(tools, "record_expense", lambda args, **k: '{"reply":"sheet: Groceries"}')
+    sent = []
+
+    class Adapter:
+        async def send(self, chat_id, content, reply_to=None):
+            sent.append((chat_id, content, reply_to))
+
+    class Platform:
+        value = "telegram"
+
+    class Source:
+        platform = Platform()
+        user_id = "395147397"
+        chat_id = "395147397"
+
+    class Event:
+        media_urls = ["/tmp/bill.jpg"]
+        media_types = ["image/jpeg"]
+        source = Source()
+        user_id = "395147397"
+        message_id = "9"
+        timestamp = None
+
+    class Gateway:
+        def _delivery_adapter_for(self, source):
+            return Adapter()
+
+    result = asyncio.run(tools.on_photo(event=Event(), gateway=Gateway()))
+    assert result == {"action": "skip", "reason": "expense photo written"}
+    assert sent == [("395147397", "sheet: Groceries", "9")]
+    bare = Event()
+    bare.media_urls = []
+    assert asyncio.run(tools.on_photo(event=bare, gateway=Gateway())) is None
 
 
 def test_ask_photo_when_image_path_missing():

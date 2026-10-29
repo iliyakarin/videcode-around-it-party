@@ -29,3 +29,5 @@ def test_saved_and_unsaved_lines():
     assert "date 2026-09-30 is outside October 2026" in text
     assert "bill had no date; used 2026-10-28" in text
     assert "not saved Other Mystery: 503" in text
+    linked = format_reply([saved], [], {"Other": "https://sheet.example/Other#gid=1"})
+    assert linked.endswith("https://sheet.example/Other#gid=1")

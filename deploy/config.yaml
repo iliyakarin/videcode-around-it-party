@@ -1,13 +1,16 @@
 model:
   provider: custom
   base_url: http://host.docker.internal:8080/v1
-  api_key: "none"
   default: Qwen3VL-8B-Instruct-Q4_K_M.gguf
   supports_vision: true
-  context_length: 32768
+  context_length: 65536
 
 plugins:
   enabled: [expense]
+
+tools:
+  tool_search:
+    enabled: off
 
 # Telegram gets only the expense tool.
 platform_toolsets:
@@ -15,5 +18,5 @@ platform_toolsets:
 
 agent:
   system_prompt: |
-    Call record_expense for every photo. Relay its reply field unchanged.
+    A photo message includes [Image attached at: PATH]. Call record_expense with image_path set to that PATH. Send the user only the tool reply field, including its link. Do not describe the receipt.
     For any message without a photo, reply exactly "Send a photo of the bill."

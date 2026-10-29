@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+
+_pkg = Path("/opt/personal-expense")
+if _pkg.is_dir() and str(_pkg) not in sys.path:
+    sys.path.insert(0, str(_pkg))
+
 from . import tools
 
 SCHEMA = {
@@ -24,3 +31,4 @@ def register(ctx):
         schema=SCHEMA,
         handler=tools.record_expense,
     )
+    ctx.register_hook("pre_gateway_dispatch", tools.on_photo)

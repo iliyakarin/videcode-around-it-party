@@ -21,6 +21,9 @@ class FakeSheets:
     def replace_summary(self, rows):
         self.summary = rows
 
+    def tab_url(self, tab):
+        return f"https://sheet.example/{tab}#gid=1"
+
     def append_row(self, tab, row):
         if tab == self.fail_on:
             raise RuntimeError("down")

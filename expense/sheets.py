@@ -71,8 +71,21 @@ class GoogleSheets:
         self._api = build("sheets", "v4", credentials=creds, cache_discovery=False)
 
     def list_tabs(self) -> list[str]:
-        meta = self._api.spreadsheets().get(spreadsheetId=self._id).execute()
-        return [sheet["properties"]["title"] for sheet in meta["sheets"]]
+        meta = self._api.spreadsheets().get(
+            spreadsheetId=self._id, fields="sheets.properties(title,sheetId)"
+        ).execute()
+        self._gids = {}
+        titles = []
+        for sheet in meta["sheets"]:
+            props = sheet["properties"]
+            titles.append(props["title"])
+            self._gids[props["title"]] = props["sheetId"]
+        return titles
+
+    def tab_url(self, tab: str) -> str:
+        url = f"https://docs.google.com/spreadsheets/d/{self._id}/edit"
+        gid = getattr(self, "_gids", {}).get(tab)
+        return url if gid is None else f"{url}#gid={gid}"
 
     def read_header(self, tab: str) -> list[str]:
         res = self._api.spreadsheets().values().get(
